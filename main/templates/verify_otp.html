@@ -1,0 +1,190 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Verify OTP</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: 
+        linear-gradient(rgba(255,255,255,0.6), rgba(255,255,255,0.6)),
+        url("{% static 'images/bg.jpg' %}") no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .otp-box {
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      width: 400px;
+      animation: fadeSlideUp 0.8s ease;
+    }
+
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .otp-box h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #111;
+    }
+
+    .otp-box form input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background-color: #f9f9f9;
+      font-size: 16px;
+    }
+
+    .otp-box button {
+      width: 100%;
+      padding: 12px;
+      background-color: #000;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      margin-top: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .otp-box button:hover {
+      background-color: #333;
+    }
+
+    .resend-container {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .resend-container button {
+      margin-top: 10px;
+      background-color: transparent;
+      color: #007bff;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: underline;
+    }
+
+    .resend-container button:disabled {
+      color: gray;
+      cursor: not-allowed;
+      text-decoration: none;
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #333;
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: 8px;
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: all 0.5s ease;
+      z-index: 9999;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 500px) {
+      .otp-box {
+        width: 90%;
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
+
+<div class="otp-box">
+  <h2>Enter OTP</h2>
+
+  {% if messages %}
+    <div class="error">
+      {% for message in messages %}
+        <script>
+          window.onload = () => showToast("{{ message|escapejs }}");
+        </script>
+        <p>{{ message }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="text" name="otp" placeholder="Enter 6-digit OTP" maxlength="6" required>
+    <button type="submit">Verify</button>
+  </form>
+
+  <div class="resend-container">
+    <span id="timer">Resend available in 60s</span><br>
+    <form method="post" action="{% url 'resend_otp' %}">
+      {% csrf_token %}
+      <button type="submit" id="resendBtn" disabled>Resend OTP</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  function showToast(message) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.classList.add("show");
+    setTimeout(() => {
+      toast.classList.remove("show");
+    }, 3000);
+  }
+
+  // Timer countdown
+  let seconds = 60;
+  const timerDisplay = document.getElementById("timer");
+  const resendBtn = document.getElementById("resendBtn");
+
+  const countdown = setInterval(() => {
+    seconds--;
+    timerDisplay.textContent = `Resend available in ${seconds}s`;
+
+    if (seconds <= 0) {
+      clearInterval(countdown);
+      timerDisplay.textContent = "You can now resend the OTP.";
+      resendBtn.disabled = false;
+    }
+  }, 1000);
+</script>
+
+</body>
+</html>

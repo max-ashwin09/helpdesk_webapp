@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Home | Smart Community HelpDesk{% endblock %}
+
+{% block content %}
+
+<!-- 🏠 Hero Section -->
+<section class="hero-section text-center py-5 bg-light rounded shadow-sm">
+  <div class="container">
+    <h1 class="display-4 fw-bold text-dark">Welcome to <span class="text-primary">Smart HelpDesk</span></h1>
+    <p class="lead text-muted">Ask questions, get instant answers from the community or AI support.</p>
+    <a href="{% url 'ask_question' %}" class="btn btn-primary btn-lg px-4 mt-3 shadow">
+      <i class="fa fa-question-circle"></i> Ask a Question
+    </a>
+
+    <!-- 🔍 Search Bar -->
+    <form method="get" action="{% url 'search_questions' %}" class="mt-4">
+      <div class="input-group mx-auto" style="max-width:500px;">
+        <input type="text" name="q" class="form-control form-control-lg" placeholder="Search questions...">
+        <button class="btn btn-dark btn-lg" type="submit"><i class="fa fa-search"></i></button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- 📋 Recent Questions -->
+<section class="recent-questions py-5">
+  <div class="container">
+    <h3 class="mb-4 fw-bold"><i class="fa fa-newspaper"></i> Recent Questions</h3>
+    {% if questions %}
+      <div class="row">
+        {% for q in questions %}
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm hover-shadow transition">
+              <div class="card-body">
+                <h5 class="card-title">
+                  <a href="{% url 'view_question' q.id %}" class="text-decoration-none text-dark fw-semibold">
+                    {{ q.title|truncatechars:60 }}
+                  </a>
+                </h5>
+                <p class="card-text text-muted small mb-2">
+                  Asked by <b>{{ q.user.username }}</b> • {{ q.created_at|date:"M d, Y" }}
+                </p>
+                <p class="card-text">{{ q.body|truncatewords:20 }}</p>
+                {% if q.tags %}
+                  <span class="badge bg-primary"><i class="fa fa-tag"></i> {{ q.tags }}</span>
+                {% endif %}
+              </div>
+              <div class="card-footer bg-transparent border-0 text-end">
+                <a href="{% url 'view_question' q.id %}" class="btn btn-outline-primary btn-sm">
+                  View Details <i class="fa fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info">
+        <i class="fa fa-info-circle"></i> No questions posted yet. Be the first one to ask!
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<style>
+  .hover-shadow:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+  }
+  .transition {
+    transition: all 0.3s ease-in-out;
+  }
+</style>
+
+{% endblock %}

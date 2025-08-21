@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}Profile | Smart HelpDesk{% endblock %}
+
+{% block content %}
+<style>
+  .profile-container {
+    margin: 50px auto;
+    max-width: 1100px;
+  }
+
+  /* Profile Card */
+  .profile-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    padding: 30px 20px;
+    text-align: center;
+  }
+
+  .profile-pic-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+
+  .profile-pic-wrapper img,
+  .default-avatar {
+    border-radius: 50%;
+    border: 3px solid #e5e7eb;
+    width: 130px;
+    height: 130px;
+    object-fit: cover;
+    background: #f9fafb;
+  }
+
+  .default-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+    color: #9ca3af;
+  }
+
+  .profile-pic-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: 0.2s;
+  }
+
+  .profile-pic-wrapper:hover .profile-pic-overlay {
+    opacity: 1;
+  }
+
+  .profile-pic-overlay button {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    padding: 5px 10px;
+    margin: 3px 0;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .profile-info h4 {
+    margin-top: 15px;
+    font-weight: 600;
+  }
+
+  .profile-info p {
+    margin: 2px 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+
+  /* Form Card */
+  .form-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+
+  .form-card .card-header {
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 12px 18px;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .form-label {
+    font-weight: 500;
+  }
+
+  .btn-save {
+    background: #2563eb;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-weight: 500;
+    color: white;
+    transition: 0.2s;
+  }
+
+  .btn-save:hover {
+    background: #1d4ed8;
+  }
+</style>
+
+<div class="container profile-container">
+  <div class="row g-4">
+
+    <!-- Profile Sidebar -->
+    <div class="col-lg-4">
+      <div class="profile-card">
+        <div class="profile-pic-wrapper mx-auto">
+          {% if profile.profile_picture %}
+            <img src="{{ profile.profile_picture.url }}" alt="Profile Picture">
+          {% else %}
+            <div class="default-avatar">
+              <i class="bi bi-person"></i>
+            </div>
+          {% endif %}
+
+          <!-- Overlay -->
+          <div class="profile-pic-overlay">
+            <form method="POST" enctype="multipart/form-data" action="{% url 'profile' %}">
+              {% csrf_token %}
+              <input type="file" id="id_profile_picture" name="profile_picture" style="display:none;" onchange="this.form.submit()">
+              <button type="button" onclick="document.getElementById('id_profile_picture').click()">Change</button>
+            </form>
+            <form method="POST" action="{% url 'remove_profile_pic' %}">
+              {% csrf_token %}
+              <button type="submit">Remove</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="profile-info">
+          <h4>{{ request.user.username }}</h4>
+          <p><i class="bi bi-envelope"></i> {{ request.user.email }}</p>
+          <p class="small fst-italic">{{ profile.bio|default:"No bio added yet..." }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="col-lg-8">
+      <div class="card form-card">
+        <div class="card-header">
+          <i class="bi bi-pencil-square"></i> Edit Profile
+        </div>
+        <div class="card-body p-4">
+          <form method="POST" enctype="multipart/form-data" class="row g-3">
+            {% csrf_token %}
+            {% for field in form %}
+              <div class="col-12">
+                <label class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                  <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                  <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+
+            <div class="col-12 text-end">
+              <button type="submit" class="btn btn-save">
+                <i class="bi bi-save"></i> Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sign Up | Smart HelpDesk{% endblock %}
+
+{% block content %}
+<style>
+  /* Background with blur */
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    height: 100%;
+    background: url("{% static 'images/bg.jpg' %}") no-repeat center center fixed;
+    background-size: cover;
+  }
+
+  .overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.6);
+    z-index: 1;
+  }
+
+  /* Center wrapper */
+  .signup-wrapper {
+    min-height: 100vh; /* screen ke according */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    position: relative;
+  }
+
+  /* Signup Card */
+  .signup-box {
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 35px 40px;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    width: 600px;
+    animation: fadeSlideUp 0.8s ease;
+  }
+
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .signup-box h2 {
+    text-align: center;
+    margin-bottom: 22px;
+    color: #111;
+  }
+
+  .signup-box form input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+  }
+
+  .signup-box button {
+    width: 100%;
+    padding: 12px;
+    background-color: #000;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    margin-top: 12px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .signup-box button:hover {
+    background-color: #333;
+  }
+
+  .login-redirect {
+    text-align: center;
+    margin-top: 18px;
+    font-size: 0.9rem;
+    color: #444;
+  }
+
+  .login-redirect a {
+    color: #000;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #333;
+    color: #fff;
+    padding: 14px 20px;
+    border-radius: 8px;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.5s ease;
+    z-index: 9999;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  .error {
+    color: red;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+
+  @media (max-width: 500px) {
+    .signup-box {
+      width: 90%;
+      padding: 25px;
+    }
+  }
+</style>
+
+<!-- Background blur -->
+<div class="overlay"></div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Signup Card -->
+<div class="signup-wrapper">
+  <div class="signup-box">
+    <h2>Create Your Account</h2>
+    <form method="POST" onsubmit="showToast('Verify OTP!')">
+      {% csrf_token %}
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="email" name="email" placeholder="Email Address" required>
+      <input type="text" name="phone" placeholder="Phone Number" required>
+      <input type="password" name="password1" placeholder="Password" required>
+      <input type="password" name="password2" placeholder="Confirm Password" required>
+      <button type="submit">Sign Up</button>
+    </form>
+
+    <div class="login-redirect">
+      Already have an account? <a href="{% url 'login' %}">Login</a>
+    </div>
+
+    {% if form.errors %}
+      <div class="error">
+        {% for field in form %}
+          {% for error in field.errors %}
+            <script>
+              window.onload = () => showToast("{{ error|escapejs }}");
+            </script>
+            <p>{{ error }}</p>
+          {% endfor %}
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  function showToast(message) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.classList.add("show");
+    setTimeout(() => { toast.classList.remove("show"); }, 3000);
+  }
+</script>
+{% endblock %}

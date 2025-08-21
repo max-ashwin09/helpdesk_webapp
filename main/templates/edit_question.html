@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- Animate.css -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css"/>
+
+<style>
+    body {
+        background: linear-gradient(to right, #eef2f3, #dfe9f3);
+    }
+    .edit-container {
+        max-width: 800px;
+        margin: auto;
+    }
+    .edit-card {
+        border-radius: 15px;
+        background: #ffffff;
+        padding: 30px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+    .btn-custom {
+        border-radius: 25px;
+        transition: 0.2s;
+    }
+    .btn-custom:hover {
+        transform: translateY(-2px);
+    }
+</style>
+
+<div class="container mt-5 edit-container animate__animated animate__fadeIn">
+    <div class="edit-card">
+        <h3 class="fw-bold text-primary mb-4">
+            <i class="bi bi-pencil-square"></i> Edit Question
+        </h3>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Title -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Title</label>
+                <input type="text" name="title" class="form-control" value="{{ question.title }}" required>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Description</label>
+                <textarea name="description" class="form-control" rows="4" required>{{ question.description }}</textarea>
+            </div>
+
+            <!-- File Upload (Edit Option) -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Attached File</label>
+                {% if question.file %}
+                    <div class="alert alert-info d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-file-earmark"></i> Current File:
+                            <a href="{{ question.file.url }}" target="_blank" class="text-decoration-none fw-semibold">View File</a>
+                        </div>
+                    </div>
+                {% endif %}
+                <input type="file" name="file" class="form-control">
+                <small class="text-muted">Leave empty if you don't want to change the file.</small>
+            </div>
+
+            <!-- Buttons -->
+            <div class="d-flex gap-3 mt-4">
+                <button type="submit" class="btn btn-success btn-custom px-4">
+                    <i class="bi bi-check2-circle"></i> Save Changes
+                </button>
+                <a href="{% url 'question_detail' question.id %}" class="btn btn-secondary btn-custom px-4">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

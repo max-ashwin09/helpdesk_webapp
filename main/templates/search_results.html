@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .fade-in {
+        animation: fadeInUp 0.6s ease-in-out;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .search-title {
+        font-weight: bold;
+        color: #0d6efd;
+        margin-bottom: 20px;
+    }
+
+    .result-card {
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 15px;
+        padding: 15px 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .result-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .no-result {
+        background: #fff3cd;
+        border: 1px solid #ffeeba;
+        color: #856404;
+        padding: 15px;
+        border-radius: 10px;
+        font-weight: 500;
+    }
+</style>
+
+<div class="container my-5 fade-in">
+    <h2 class="search-title">🔍 Search Results for <span class="text-dark">"{{ query }}"</span></h2>
+
+    {% if results %}
+        <div class="row g-3">
+            {% for question in results %}
+                <div class="col-md-6 col-lg-4 fade-in" style="animation-delay: {{ forloop.counter0|floatformat:1 }}s;">
+                    <a href="{% url 'view_question' question.id %}" style="text-decoration: none;">
+                        <div class="result-card h-100">
+                            <h5 class="mb-2 text-primary">{{ question.title }}</h5>
+                            <p class="text-muted mb-1">
+                                Posted by <strong>{{ question.user.username }}</strong>
+                            </p>
+                            <small class="text-secondary">
+                                {{ question.created_at|date:"M d, Y" }}
+                            </small>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-result mt-4">
+            ❌ No matching questions found for "<strong>{{ query }}</strong>".
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
