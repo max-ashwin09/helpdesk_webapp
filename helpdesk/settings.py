@@ -22,11 +22,8 @@ DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-    "smart-helpdeskwebapp.onrender.com"
-]
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+
 
 
 
