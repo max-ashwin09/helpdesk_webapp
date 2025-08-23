@@ -215,7 +215,7 @@ def delete_user(request, user_id):
     return redirect('home')
 
 
-# Final merged edit_question view with file replace
+#  Edit question function
 @login_required
 def edit_question(request, pk):
     question = get_object_or_404(Question, pk=pk)
@@ -223,11 +223,11 @@ def edit_question(request, pk):
     # Permission check
     if request.user != question.user and not request.user.is_superuser:
         messages.error(request, "You don't have permission to edit this post.")
-        return redirect('view_question', pk=pk)
+        return redirect('view_question', id=question.pk)
 
     if request.method == 'POST':
         question.title = request.POST.get('title')
-        question.description = request.POST.get('description')
+        question.body = request.POST.get('description')
 
         # File replace logic
         if 'file' in request.FILES and request.FILES['file']:
@@ -237,41 +237,13 @@ def edit_question(request, pk):
 
         question.save()
         messages.success(request, "Post updated successfully!")
-        return redirect('view_question', pk=question.pk)
+        return redirect('view_question', id=question.pk)
 
     return render(request, 'edit_question.html', {'question': question})
 
 
 
 
-# add files in comment , edit comment or del comment 
-
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Question, Comment
-from .forms import CommentForm
-from django.contrib.auth.decorators import login_required
-
-@login_required
-def question_detail(request, pk):
-    question = get_object_or_404(Question, pk=pk)
-    comments = question.comments.all()
-    
-    if request.method == "POST":
-        form = CommentForm(request.POST, request.FILES)  # request.FILES added
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.author = request.user
-            comment.question = question
-            comment.save()
-            return redirect('question_detail', pk=pk)
-    else:
-        form = CommentForm()
-
-    return render(request, 'question_detail.html', {
-        'question': question,
-        'comments': comments,
-        'form': form
-    })
 
 # Edit Comment
 @login_required
@@ -298,13 +270,13 @@ def edit_comment(request, comment_id):
 
     # sirf apna comment ya superuser edit kar sake
     if request.user != comment.author and not request.user.is_superuser:
-        return redirect('question_detail', question_id=comment.question.id)
+        return redirect('view_question', question_id=comment.question.id)
 
     if request.method == "POST":
         form = CommentForm(request.POST, request.FILES, instance=comment) 
         if form.is_valid():
             form.save()
-            return redirect('question_detail', pk=comment.question.id)
+            return redirect('view_question', id=comment.question.id)
     else:
         form = CommentForm(instance=comment)
 

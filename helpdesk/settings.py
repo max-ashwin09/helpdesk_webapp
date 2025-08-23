@@ -7,6 +7,9 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load .env (local use)
@@ -42,7 +45,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',   # ✅ added for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -56,7 +59,7 @@ ROOT_URLCONF = 'helpdesk.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'frontend' / 'build'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -72,13 +75,26 @@ TEMPLATES = [
 WSGI_APPLICATION = 'helpdesk.wsgi.application'
 
 
-# Database (SQLite default)
+# # Database (SQLite default)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Database (PostgreSQL for Render)
+# import dj_database_url
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.getenv("DATABASE_URL")
+#     )
+# }
+
+
+
+
 
 
 # Password validation
@@ -97,12 +113,18 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Static files & Media
+# STATIC_ROOT = BASE_DIR / 'staticfiles'
+# STATIC_URL = '/static/'
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / "frontend" / "build" / "static",
-]
+STATICFILES_DIRS = [os.path.join(BASE_DIR,'main', 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+DEBUG = True
+
 
 # whitenoise storage
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
@@ -113,8 +135,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Media
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 # Custom User
