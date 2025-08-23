@@ -14,14 +14,27 @@ class OTPForm(forms.Form):
 
 # ❓ Ask a Question Form
 class QuestionForm(forms.ModelForm):
+    file = forms.FileField(
+        required=False,   # file optional kar diya
+        widget=forms.ClearableFileInput(attrs={
+            'class': 'form-control',
+        })
+    )
+
     class Meta:
         model = Question
-        fields = ['title', 'body', 'tags', 'file']
+        fields = ['title', 'description', 'file']  # sirf ye chahiye
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your question title'}),
-            'body': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Describe your issue'}),
-            'tags': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tags like Python, Django'}),
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter your question title'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Describe your issue in detail'
+            }),
         }
+
 
 #  Comment Form
 class CommentForm(forms.ModelForm):

@@ -37,34 +37,32 @@ class OTP(models.Model):
         return (timezone.now() - self.created_at).total_seconds() > 60
 
 # Question model used for asking questions in helpdesk
+# class Question(models.Model):
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+#     title = models.CharField(max_length=255)
+#     body = models.TextField()
+#     tags = models.CharField(max_length=255, blank=True)
+#     description = models.TextField()
+#     file = models.FileField(upload_to='uploads/', null=True, blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     def __str__(self):
+#         return self.title
+from django.db import models
+from django.conf import settings
 class Question(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     body = models.TextField()
-    tags = models.CharField(max_length=255, blank=True)
     description = models.TextField()
-    file = models.FileField(upload_to='uploads/', null=True, blank=True)
+    file = models.FileField(upload_to='uploads/', null=True, blank=True) 
     created_at = models.DateTimeField(auto_now_add=True)
-    
 
     def __str__(self):
         return self.title
 
-# For multiple file upload
-class QuestionFile(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='files')
-    file = models.FileField(upload_to='uploads/')
-    uploaded_at = models.DateTimeField(auto_now_add=True)
 
-# File Upload Model
 
-class UploadedFile(models.Model):
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    file = models.FileField(upload_to='uploads/')
-    uploaded_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return self.file.name
 
 class Comment(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='comments')

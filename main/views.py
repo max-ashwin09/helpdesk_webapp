@@ -5,20 +5,21 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.utils import timezone
 from django.db.models import Q
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
+from django.views.decorators.http import require_http_methods
 import random
 
-from .models import OTP, CustomUser, Question, Comment, QuestionFile
-from .forms import SignupForm, OTPForm, QuestionForm, CommentForm
+from .models import OTP, CustomUser, Question, Comment, Profile
+from .forms import SignupForm, OTPForm, QuestionForm, CommentForm, ProfileUpdateForm
 
 
-# Home Page - Show recent questions
+# Home Page
 def home(request):
     questions = Question.objects.order_by('-created_at')[:10]
     return render(request, 'home.html', {'questions': questions})
 
 
-# Signup View (Manual, not using SignupForm)
+# Signup View
 def signup_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -62,7 +63,7 @@ def signup_view(request):
     return render(request, 'signup.html')
 
 
-# OTP Verification View
+# OTP Verification
 def verify_otp(request):
     user_id = request.session.get('user_id')
     if not user_id:
@@ -73,7 +74,7 @@ def verify_otp(request):
 
     if request.method == 'POST':
         entered_otp = request.POST.get('otp')
-        if otp_instance.code == entered_otp and not otp_instance.is_expired():
+        if otp_instance and otp_instance.code == entered_otp and not otp_instance.is_expired():
             user.is_active = True
             user.save()
             login(request, user)
@@ -107,7 +108,7 @@ def resend_otp(request):
     return redirect('verify_otp')
 
 
-# Login View
+# Login
 def login_view(request):
     if request.method == 'POST':
         uname = request.POST['username']
@@ -122,21 +123,21 @@ def login_view(request):
     return render(request, 'login.html')
 
 
-# Logout View
+# Logout
 def logout_view(request):
     logout(request)
     return redirect('home')
 
 
-# Ask a Question (Login Required)
+# Ask Question
 @login_required
 def ask_question(request):
     if request.method == 'POST':
         form = QuestionForm(request.POST, request.FILES)
         if form.is_valid():
             question = form.save(commit=False)
-            question.user = request.user  # old model field
-            question.author = request.user  # new model field
+            question.user = request.user
+            question.author = request.user
             question.save()
             return redirect('home')
     else:
@@ -144,10 +145,11 @@ def ask_question(request):
     return render(request, 'ask_question.html', {'form': form})
 
 
-# View a single question with comments
+# View Question + Comments
 def view_question(request, id):
     question = get_object_or_404(Question, id=id)
     comments = Comment.objects.filter(question=question).order_by('-created_at')
+
     if request.method == 'POST':
         if request.user.is_authenticated:
             form = CommentForm(request.POST, request.FILES)
@@ -161,6 +163,7 @@ def view_question(request, id):
             return redirect('login')
     else:
         form = CommentForm()
+
     return render(request, 'view_question.html', {
         'question': question,
         'comments': comments,
@@ -179,7 +182,7 @@ def search_questions(request):
     return render(request, 'search_results.html', {'results': results, 'query': query})
 
 
-# Question Delete View me security logic
+# Delete Question File
 @login_required
 def delete_question_file(request, id):
     file = get_object_or_404(QuestionFile, id=id)
@@ -187,6 +190,7 @@ def delete_question_file(request, id):
         if file.file:
             file.file.delete(save=False)
         file.delete()
+        messages.success(request, "File deleted successfully!")
         return redirect('home')
     else:
         return HttpResponseForbidden("You are not allowed to delete this file.")
@@ -202,10 +206,10 @@ def delete_question(request, pk):
         return redirect('home')
     else:
         messages.error(request, "You don't have permission to delete this post.")
-        return redirect('view_question', pk=pk)
+        return redirect('view_question', id=pk)
 
 
-# Delete User (Admin Only)
+# Delete User (Admin only)
 @user_passes_test(lambda u: u.is_superuser)
 def delete_user(request, user_id):
     from django.contrib.auth.models import User
@@ -215,12 +219,11 @@ def delete_user(request, user_id):
     return redirect('home')
 
 
-#  Edit question function
+# Edit Question
 @login_required
 def edit_question(request, pk):
     question = get_object_or_404(Question, pk=pk)
 
-    # Permission check
     if request.user != question.user and not request.user.is_superuser:
         messages.error(request, "You don't have permission to edit this post.")
         return redirect('view_question', id=question.pk)
@@ -229,11 +232,10 @@ def edit_question(request, pk):
         question.title = request.POST.get('title')
         question.body = request.POST.get('description')
 
-        # File replace logic
         if 'file' in request.FILES and request.FILES['file']:
             if question.file:
-                question.file.delete(save=False)  # delete old file
-            question.file = request.FILES['file']  # set new file
+                question.file.delete(save=False)
+            question.file = request.FILES['file']
 
         question.save()
         messages.success(request, "Post updated successfully!")
@@ -242,38 +244,16 @@ def edit_question(request, pk):
     return render(request, 'edit_question.html', {'question': question})
 
 
-
-
-
 # Edit Comment
 @login_required
-# def edit_comment(request, comment_id):
-#     comment = get_object_or_404(Comment, id=comment_id)
-
-#     # Only author or superuser can edit
-#     if request.user != comment.author and not request.user.is_superuser:
-#         return redirect('question_detail', pk=comment.question.id)
-
-#     if request.method == "POST":
-#         form = CommentForm(request.POST, request.FILES, instance=comment)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('question_detail', pk=comment.question.id)
-#     else:
-#         form = CommentForm(instance=comment)
-
-#     return render(request, 'edit_comment.html', {'form': form})
-
-
 def edit_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
 
-    # sirf apna comment ya superuser edit kar sake
     if request.user != comment.author and not request.user.is_superuser:
-        return redirect('view_question', question_id=comment.question.id)
+        return redirect('view_question', id=comment.question.id)
 
     if request.method == "POST":
-        form = CommentForm(request.POST, request.FILES, instance=comment) 
+        form = CommentForm(request.POST, request.FILES, instance=comment)
         if form.is_valid():
             form.save()
             return redirect('view_question', id=comment.question.id)
@@ -288,27 +268,18 @@ def edit_comment(request, comment_id):
 def delete_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
 
-    # Only author or superuser can delete
     if request.user != comment.author and not request.user.is_superuser:
-        return redirect('question_detail', pk=comment.question.id)
+        return redirect('view_question', id=comment.question.id)
 
     question_id = comment.question.id
     comment.delete()
-    return redirect('question_detail', pk=question_id)
+    messages.success(request, "Comment deleted successfully!")
+    return redirect('view_question', id=question_id)
 
 
-
-
-# Profile FUnction 
-
-
-from .models import Profile
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from .forms import ProfileUpdateForm
+# Profile
 @login_required
 def profile(request):
-    # Profile object create karo agar exist nahi karta
     profile, created = Profile.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
@@ -326,44 +297,29 @@ def profile(request):
     })
 
 
-# Remove Profile Picture
+# Remove Profile Pic
 @login_required
 def remove_profile_pic(request):
     if request.method == "POST":
         profile = request.user.profile
-        profile.profile_picture.delete(save=False)  
-        profile.profile_picture = None  
+        profile.profile_picture.delete(save=False)
+        profile.profile_picture = None
         profile.save()
     return redirect("profile")
 
 
-
-
-
 # AI Suggestion View
-# main/views.py
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from django.shortcuts import get_object_or_404
-from .models import Question  # apne model ka sahi naam use karein
-
 @require_http_methods(["GET", "POST"])
 def ai_suggest(request, question_id):
-    """
-    Always returns JsonResponse.
-    Never falls through without return.
-    """
     try:
         question = get_object_or_404(Question, pk=question_id)
 
-        # Input text: POST 'text' > GET 'text' > question ka title/body
         text = (
             request.POST.get("text")
             or request.GET.get("text")
             or f"{getattr(question, 'title', '')}\n{getattr(question, 'body', '')}"
         ).strip()
 
-        # Dummy suggestion (yaha apna AI/LLM/logic call karo)
         suggestions = generate_suggestions(text)
 
         return JsonResponse(
@@ -375,36 +331,14 @@ def ai_suggest(request, question_id):
             },
             status=200,
         )
-
     except Exception as e:
-        # IMPORTANT: kabhi bhi None return mat hone do
-        # yaha logging bhi kar sakte ho
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
 
 
 def generate_suggestions(text: str):
-    """
-    Placeholder: apna AI logic yaha lagao.
-    Return hamesha list/dict jaisa JSON-serializable hona chahiye.
-    """
     base = text[:80].replace("\n", " ")
     return [
         f"Clarify the problem scope related to: '{base}...'",
         "Share sample input/output so helpers can reproduce.",
         "Add relevant tags and environment details (OS, versions).",
     ]
-
-
-
-
-# from time import time
-
-# @login_required
-# @require_GET
-# def ai_suggest(request, pk: int):
-#     last = request.session.get("ai_last_ts", 0)
-#     now = time()
-#     if now - last < 8:  # 8 seconds cooldown
-#         return JsonResponse({"ok": False, "error": "Slow down. Try again in a few seconds."}, status=429)
-#     request.session["ai_last_ts"] = now
-#     # ...baaki code same (as above) ...
